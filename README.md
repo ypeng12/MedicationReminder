@@ -120,12 +120,37 @@ curl http://localhost:3000/api/logs
 
 * Clear setup and operation instructions provided.
 * Modular and maintainable code structure.
+LLM Analysis Explanation
 
+After the patient's speech is transcribed, the LLM (OpenAI's GPT) clearly classifies the patient's response into one of three categories:
+
+Category
+
+Meaning
+
+Example
+
+YES
+
+Clearly confirms they took medications
+
+"Yes, I've taken all my medications today."
+
+NO
+
+Clearly states they have NOT taken medications
+
+"No, I haven't taken them yet."
+
+UNCLEAR
+
+Ambiguous or unrelated responses, difficult to interpret
+
+"I need a callback" or "I'm not sure."
 ## 🚧 Future Improvements (Optional)
 
 * Integrate persistent storage for call logs (e.g., MongoDB, Redis).
 * Comprehensive unit and integration testing.
-* Advanced patient interaction using LLM services.
 
 ## 🎯 Evaluation Criteria Met
 
