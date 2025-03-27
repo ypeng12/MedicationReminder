@@ -100,6 +100,11 @@ To see call logs and transcriptions:
 curl http://localhost:3000/api/logs
 ```
 
+![image](https://github.com/user-attachments/assets/9a0a1395-034d-4e61-bb6a-4f50be3c0f04)
+
+
+![image](https://github.com/user-attachments/assets/8564dcb2-ddec-4ef9-b858-f7e805c29f8d)
+
 ## 🌐 Webhook Endpoints
 
 | Route                                  | Purpose                                   |
