@@ -99,37 +99,37 @@ app.post('/voice', (req, res) => {
     res.sendStatus(200);
   });
   
-// /record-complete — receive recording and transcribe
-app.post('/record-complete', async (req, res) => {
-  const { CallSid, RecordingUrl } = req.body;
+// // /record-complete — receive recording and transcribe
+// app.post('/record-complete', async (req, res) => {
+//   const { CallSid, RecordingUrl } = req.body;
 
-  try {
-    const audio = await axios.get(`${RecordingUrl}.mp3`, {
-      auth: { username: TWILIO_ACCOUNT_SID, password: TWILIO_AUTH_TOKEN },
-      responseType: 'arraybuffer'
-    });
+//   try {
+//     const audio = await axios.get(`${RecordingUrl}.mp3`, {
+//       auth: { username: TWILIO_ACCOUNT_SID, password: TWILIO_AUTH_TOKEN },
+//       responseType: 'arraybuffer'
+//     });
 
-    const transcriptRes = await axios.post(
-      'https://api.deepgram.com/v1/listen?punctuate=true',
-      audio.data,
-      { headers: { 'Content-Type': 'audio/mp3', 'Authorization': `Token ${DEEPGRAM_API_KEY}` } }
-    );
+//     const transcriptRes = await axios.post(
+//       'https://api.deepgram.com/v1/listen?punctuate=true',
+//       audio.data,
+//       { headers: { 'Content-Type': 'audio/mp3', 'Authorization': `Token ${DEEPGRAM_API_KEY}` } }
+//     );
 
-    const transcript = transcriptRes.data?.results?.channels?.[0]?.alternatives?.[0]?.transcript || '';
-    console.log(`📝 Call ${CallSid}, Response: "${transcript}"`);
+//     const transcript = transcriptRes.data?.results?.channels?.[0]?.alternatives?.[0]?.transcript || '';
+//     console.log(`📝 Call ${CallSid}, Response: "${transcript}"`);
 
-    callLogs.push({ callSid: CallSid, status: 'answered', response: transcript });
-    answeredCallSids.add(CallSid);
-  } catch (err) {
-    console.error("❌ Transcription failed:", err.message);
-    callLogs.push({ callSid: CallSid, status: 'answered', response: '' });
-  }
+//     callLogs.push({ callSid: CallSid, status: 'answered', response: transcript });
+//     answeredCallSids.add(CallSid);
+//   } catch (err) {
+//     console.error("❌ Transcription failed:", err.message);
+//     callLogs.push({ callSid: CallSid, status: 'answered', response: '' });
+//   }
 
-  const twiml = new twilio.twiml.VoiceResponse();
-  twiml.say('Thank you. Goodbye.');
-  twiml.hangup();
-  res.type('text/xml').send(twiml.toString());
-});
+//   const twiml = new twilio.twiml.VoiceResponse();
+//   twiml.say('Thank you. Goodbye.');
+//   twiml.hangup();
+//   res.type('text/xml').send(twiml.toString());
+// });
 
 // /status — if call fails or is not answered
 app.post('/status', async (req, res) => {
@@ -167,4 +167,42 @@ app.get('/api/logs', (req, res) => res.json(callLogs));
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
+});
+
+const { analyzeResponse } = require('./services/openaiService');
+
+app.post('/record-complete', async (req, res) => {
+  const { CallSid, RecordingUrl } = req.body;
+
+  try {
+    const audio = await axios.get(`${RecordingUrl}.mp3`, {
+      auth: { username: TWILIO_ACCOUNT_SID, password: TWILIO_AUTH_TOKEN },
+      responseType: 'arraybuffer'
+    });
+
+    const transcriptRes = await axios.post(
+      'https://api.deepgram.com/v1/listen?punctuate=true',
+      audio.data,
+      { headers: { 'Content-Type': 'audio/mp3', 'Authorization': `Token ${DEEPGRAM_API_KEY}` } }
+    );
+
+    const transcript = transcriptRes.data?.results?.channels?.[0]?.alternatives?.[0]?.transcript || '';
+
+    console.log('Transcript:', transcript); // ← add this debug line clearly
+
+    // ✅ Call OpenAI clearly here
+    const confirmation = await analyzeResponse(transcript);
+    console.log(`📝 Call ${CallSid}, Response: "${transcript}", Confirmed: ${confirmation}`);
+
+    callLogs.push({ callSid: CallSid, status: 'answered', response: transcript, confirmed: confirmation });
+    answeredCallSids.add(CallSid);
+  } catch (err) {
+    console.error("❌ Error during LLM analysis:", err);
+    callLogs.push({ callSid: CallSid, status: 'answered', response: '', confirmed: 'UNCLEAR' });
+  }
+
+  const twiml = new twilio.twiml.VoiceResponse();
+  twiml.say('Thank you. Goodbye.');
+  twiml.hangup();
+  res.type('text/xml').send(twiml.toString());
 });
