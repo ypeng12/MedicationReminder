@@ -8,8 +8,8 @@ const client = require("twilio")(accountSid, authToken);
 // Make the call
 client.calls.create({
   url: "https://fba1-2603-8000-75f0-8d30-b5f9-97ee-1aa4-c0.ngrok-free.app", // Twilio will GET this XML to control the call
-  to: "+12408869716", // 👈 your verified phone number
-  from: "+18669308686", // 👈 your Twilio number
+  to: "+12408869716", //  verified phone number
+  from: "+18669308686", // Twilio number
 })
 .then(call => console.log("Call SID:", call.sid))
 .catch(err => console.error("Call failed:", err));
